@@ -219,11 +219,11 @@ def decode_rle(stream, width, height):
 
         if color == b"\x00":
             flags = ord(_eof_aware_read(stream, 1, True))
-            run = flags & 0x3f;
+            run = flags & 0x3f
             if flags & 0x40:
                 run = (run << 8) + ord(_eof_aware_read(stream, 1, True))
 
-            color = (_eof_aware_read(stream, 1, True) 
+            color = (_eof_aware_read(stream, 1, True)
                      if (flags & 0x80) else b"\x00")
 
         assert run >= 0
@@ -256,7 +256,7 @@ def igs_decoded_segments(stream):
             continue
 
         pending_pictures.append(seg)
-        cur_data_length = sum(len(x["rle_bitmap_data"]) 
+        cur_data_length = sum(len(x["rle_bitmap_data"])
                               for x in pending_pictures)
         pic_data_length = pending_pictures[0]["rle_bitmap_len"]
         if cur_data_length < pic_data_length:
