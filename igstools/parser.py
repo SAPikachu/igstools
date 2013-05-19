@@ -10,9 +10,12 @@ BUTTON_SEGMENT  = 0x18
 DISPLAY_SEGMENT = 0x80
 
 
-def _eof_aware_read(stream, length):
+def _eof_aware_read(stream, length, fail_on_no_data=False):
     ret = stream.read(length)
     if not ret:
+        if fail_on_no_data:
+            raise EOFError()
+
         return None
 
     if len(ret) < length:
@@ -55,10 +58,9 @@ def igs_raw_segments(stream):
 
 def parse_palette_segment(stream):
     ret = {
+        "id": unpack_from_stream(">H", stream)[0],
         "palette": [],
     }
-    # Drop 2 useless bytes
-    stream.read(2)
 
     while True:
         entry_data = unpack_from_stream("BBBBB", stream)
@@ -80,7 +82,7 @@ def parse_palette_segment(stream):
 def parse_picture_segment(stream):
     # [u16 oid] [u8 ver] [u8 seq_desc] [u24 rle_bitmap_len *]
     # [u16 width] [u16 height]
-    oid, ver, seq_desc, len1, len2, len3, width, height = \
+    picture_id, ver, seq_desc, len1, len2, len3, width, height = \
         unpack_from_stream(">HBBBBBHH", stream)
 
     rle_bitmap_len = (len1 << 16) | (len2 << 8) | len3
@@ -88,7 +90,7 @@ def parse_picture_segment(stream):
     # Stored length includes width and height
     rle_bitmap_len -= 4
     return {
-        "oid": oid,
+        "id": picture_id,
         "ver": ver,
         "seq_desc": seq_desc,
         "is_continuation": not bool(seq_desc & 0x80),
@@ -97,6 +99,7 @@ def parse_picture_segment(stream):
         "rle_bitmap_len": rle_bitmap_len,
         "rle_bitmap_data": stream.read(),
     }
+
 
 def parse_button_segment(stream):
     # [u16 width] [u16 height] [u8 framerate_id] [u16 unkwown] [u8 flags]
@@ -191,7 +194,7 @@ def parse_button_segment(stream):
     return ret
 
 
-def igs_segments(stream):
+def igs_parsing_segments(stream):
     ops = {
         PALETTE_SEGMENT: parse_palette_segment,
         PICTURE_SEGMENT: parse_picture_segment,
@@ -202,3 +205,78 @@ def igs_segments(stream):
         op = ops[seg["seg_type"]]
         seg.update(op(io.BytesIO(seg["raw_data"])))
         yield seg
+
+
+def decode_rle(stream, width, height):
+    out_stream = io.BytesIO()
+    pixels_decoded = 0
+    while True:
+        color = stream.read(1)
+        if not color:
+            break
+
+        run = 1
+
+        if color == b"\x00":
+            flags = ord(_eof_aware_read(stream, 1, True))
+            run = flags & 0x3f;
+            if flags & 0x40:
+                run = (run << 8) + ord(_eof_aware_read(stream, 1, True))
+
+            color = (_eof_aware_read(stream, 1, True) 
+                     if (flags & 0x80) else b"\x00")
+
+        assert run >= 0
+        if run > 0:
+            out_stream.write(color * run)
+            pixels_decoded += run
+        else:
+            # New line
+            if pixels_decoded % width != 0:
+                raise ValueError("Incorrect number of pixels")
+
+    decoded_data = out_stream.getvalue()
+    expected_size = width * height
+    actual_size = len(decoded_data)
+    if actual_size < expected_size:
+        raise EOFError()
+    elif actual_size > expected_size:
+        raise ValueError("Expected {} pixels, got {}".format(
+            expected_size, actual_size
+        ))
+
+    return decoded_data
+
+
+def igs_decoded_segments(stream):
+    pending_pictures = []
+    for seg in igs_parsing_segments(stream):
+        if seg["seg_type"] != PICTURE_SEGMENT:
+            yield seg
+            continue
+
+        pending_pictures.append(seg)
+        cur_data_length = sum(len(x["rle_bitmap_data"]) 
+                              for x in pending_pictures)
+        pic_data_length = pending_pictures[0]["rle_bitmap_len"]
+        if cur_data_length < pic_data_length:
+            continue
+
+        if cur_data_length > pic_data_length:
+            raise ValueError("Picture data is too long")
+
+        new_picture = pending_pictures[0].copy()
+        new_picture["picture_data"] = decode_rle(
+            io.BytesIO(b"".join([x["rle_bitmap_data"]
+                       for x in pending_pictures])),
+            new_picture["width"],
+            new_picture["height"],
+        )
+        del new_picture["rle_bitmap_data"]
+        del new_picture["rle_bitmap_len"]
+        del new_picture["is_continuation"]
+        pending_pictures.clear()
+        yield new_picture
+
+    if pending_pictures:
+        raise EOFError()
