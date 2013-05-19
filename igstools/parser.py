@@ -28,6 +28,7 @@ def unpack_from_stream(fmt, stream):
 
     return struct.unpack(fmt, data)
 
+
 def igs_raw_segments(stream):
     # All integers are in big-endian
     # ["IG"] [u32 pts] [u32 dts] [u8 seg_type] [u16 seg_length]
@@ -189,6 +190,7 @@ def parse_button_segment(stream):
 
     return ret
 
+
 def igs_segments(stream):
     ops = {
         PALETTE_SEGMENT: parse_palette_segment,
@@ -200,6 +202,7 @@ def igs_segments(stream):
         op = ops[seg["seg_type"]]
         seg.update(op(io.BytesIO(seg["raw_data"])))
         yield seg
+
 
 if __name__ == '__main__':
     import debugging
