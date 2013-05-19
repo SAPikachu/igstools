@@ -202,17 +202,3 @@ def igs_segments(stream):
         op = ops[seg["seg_type"]]
         seg.update(op(io.BytesIO(seg["raw_data"])))
         yield seg
-
-
-if __name__ == '__main__':
-    import debugging
-    debugging.setup()
-    with open("00009.mnu", "rb") as f:
-        for seg in igs_segments(f):
-            print("Type: 0x{:x}, Len: {}".format(
-                seg["seg_type"], 
-                len(seg["raw_data"])
-            ))
-            if seg["seg_type"] == BUTTON_SEGMENT:
-                import pprint
-                pprint.pprint(seg["pages"])
