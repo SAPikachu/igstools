@@ -83,3 +83,11 @@ def page_to_png(menu, page_index, stream, matrix=None, tv_range=True):
 
             writer = png.Writer(width, height, alpha=True, bitdepth=16)
             writer.write_array(stream, view)
+
+
+def menu_to_png(
+    menu, name_format="page_{0.id}.png", matrix=None, tv_range=True,
+):
+    for i in range(len(menu.pages)):
+        with open(name_format.format(menu.pages[i]), "wb") as f:
+            page_to_png(menu, i, f, matrix, tv_range)
