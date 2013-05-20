@@ -11,6 +11,16 @@ class Palette(dict):
             assert color["color_id"] not in self
             self[color["color_id"]] = color
 
+        if 255 not in self:
+            # Seems #255 is always fully-transparent black
+            self[255] = {
+                "color_id": 255,
+                "y": 16,
+                "cb": 128,
+                "cr": 128,
+                "alpha": 0,
+            }
+
     def __str__(self):
         return "<Palette ({} colors)>".format(len(self))
 
