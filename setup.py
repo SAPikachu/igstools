@@ -19,7 +19,7 @@ setup(
     packages=["igstools"],
     install_requires=requirements,
     entry_points={
-        "console_scripts": ["igstools = igstools.__main__:main"],
+        "console_scripts": ["igs_to_png = igstools.__main__:main"],
     },
     classifiers=[
         "Development Status :: 4 - Beta",

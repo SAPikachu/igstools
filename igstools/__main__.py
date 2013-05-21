@@ -23,7 +23,7 @@ def _error_msg(msg, verbose):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="igstools",
+        prog="igs_to_png",
         description="Export bluray IGS menu to PNG images",
     )
     parser.add_argument("files", metavar="file", nargs="+")
