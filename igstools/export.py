@@ -70,8 +70,8 @@ def page_to_png(menu, page_index, stream, matrix=None, tv_range=True):
                         continue
 
                     assert button.x >= 0 and button.y >= 0
-                    assert button.x + pic.width < width
-                    assert button.y + pic.height < height
+                    assert button.x + pic.width <= width
+                    assert button.y + pic.height <= height
 
                     for y in range(pic.height):
                         line_start = (button.y + y) * width + button.x
