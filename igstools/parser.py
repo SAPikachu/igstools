@@ -58,9 +58,11 @@ def igs_raw_segments(stream):
 
 def parse_palette_segment(stream):
     ret = {
-        "id": unpack_from_stream(">H", stream)[0],
         "palette": [],
     }
+
+    # 2 unknown bytes, not id
+    stream.read(2)
 
     while True:
         entry_data = unpack_from_stream("BBBBB", stream)

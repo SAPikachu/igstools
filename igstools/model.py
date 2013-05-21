@@ -6,7 +6,6 @@ from .parser import (
 
 class Palette(dict):
     def __init__(self, seg):
-        self.id = seg["id"]
         for color in seg["palette"]:
             assert color["color_id"] not in self
             self[color["color_id"]] = color
@@ -95,11 +94,11 @@ class IGSMenu:
         return "<IGSMenu ({} pages)>".format(len(self.pages))
 
     def _fill_data(self, parsed_data):
-        self.palettes = {
-            seg["id"]: Palette(seg)
+        self.palettes = [
+            Palette(seg)
             for seg in parsed_data
             if seg["seg_type"] == PALETTE_SEGMENT
-        }
+        ]
         self.pictures = {
             seg["id"]: Picture(seg)
             for seg in parsed_data
