@@ -2,6 +2,8 @@
 
 from setuptools import setup
 
+from igstools.__main__ import ENTRYPOINT
+
 with open("README.rst", "r") as f:
     long_description = f.read()
 
@@ -19,7 +21,7 @@ setup(
     packages=["igstools"],
     install_requires=requirements,
     entry_points={
-        "console_scripts": ["igs_to_png = igstools.__main__:main"],
+        "console_scripts": [ENTRYPOINT + " = igstools.__main__:main"],
     },
     classifiers=[
         "Development Status :: 4 - Beta",

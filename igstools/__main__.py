@@ -8,6 +8,8 @@ import functools
 from . import IGSMenu
 from .export import menu_to_png, YCBCR_COEFF
 
+ENTRYPOINT = "igstopng"
+
 
 @contextmanager
 def _error_msg(msg, verbose):
@@ -23,7 +25,7 @@ def _error_msg(msg, verbose):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="igs_to_png",
+        prog=ENTRYPOINT,
         description="Export bluray IGS menu to PNG images",
     )
     parser.add_argument("files", metavar="file", nargs="+")
