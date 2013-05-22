@@ -56,7 +56,7 @@ def main():
         prefix, _ = os.path.splitext(name)
         with m("Unable to generate image for {}".format(name)):
             menu_to_png(
-                menu, prefix + "_{0.id}.png",
+                menu, prefix + "_{0.id}_{state1}_{state2}.png",
                 matrix=args.matrix,
                 tv_range=args.tv_range,
             )

@@ -45,7 +45,10 @@ def _build_rgb_palette(ycbcr_palette, coeff, tv_range):
     }
 
 
-def page_to_png(menu, page_index, stream, matrix=None, tv_range=True):
+def page_to_png(
+    menu, page_index, stream,
+    matrix=None, tv_range=True, state_selector=lambda _:("normal", "start"),
+):
     if isinstance(stream, str):
         with open(stream, "wb") as f:
             return page_to_png(menu, page_index, f, matrix, tv_range)
@@ -65,7 +68,8 @@ def page_to_png(menu, page_index, stream, matrix=None, tv_range=True):
         with main_view.cast("H") as view:
             for bog in page.bogs:
                 for button in bog.buttons.values():
-                    pic = button.states["normal"]["start"]
+                    state1, state2 = state_selector(button)
+                    pic = button.states[state1][state2]
                     if not pic:
                         continue
 
@@ -86,8 +90,32 @@ def page_to_png(menu, page_index, stream, matrix=None, tv_range=True):
 
 
 def menu_to_png(
-    menu, name_format="page_{0.id}.png", matrix=None, tv_range=True,
+    menu,
+    name_format="page_{0.id}_{state1}_{state2}.png",
+    matrix=None,
+    tv_range=True,
 ):
     for i in range(len(menu.pages)):
-        with open(name_format.format(menu.pages[i]), "wb") as f:
-            page_to_png(menu, i, f, matrix, tv_range)
+        for state1 in ("normal", "selected", "activated"):
+            for state2 in ("start", "stop"):
+                with open(name_format.format(
+                              menu.pages[i],
+                              state1=state1,
+                              state2=state2,
+                          ),
+                          "wb") as f:
+                    def _select_state(button):
+                        preferences = (
+                            (state1, state2),
+                            (state1, "start"),
+                            ("normal", state2)
+                        )
+
+                        for s1, s2 in preferences:
+                            if button.states[s1][s2]:
+                                return s1, s2
+
+                        return "normal", "start"
+
+                    page_to_png(menu, i, f, matrix, tv_range,
+                                state_selector=_select_state,)
