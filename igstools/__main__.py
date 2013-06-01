@@ -7,15 +7,19 @@ import functools
 
 from . import IGSMenu
 from .export import menu_to_png, YCBCR_COEFF
+from . import debugging
 
 ENTRYPOINT = "igstopng"
 
 
 @contextmanager
-def _error_msg(msg, verbose):
+def _error_msg(msg, verbose, debug):
     try:
         yield
     except:
+        if debug:
+            raise
+
         if verbose:
             traceback.print_exc()
 
@@ -34,6 +38,10 @@ def main():
         help="show detailed information on error",
     )
     parser.add_argument(
+        "-d", "--debug", action="store_true",
+        help="attach pdb on error",
+    )
+    parser.add_argument(
         "-m", "--matrix", choices=YCBCR_COEFF.keys(),
         help="specify YUV matrix of menu file. If skipped, it will be auto-" +
              "detected from height of the menu.",
@@ -43,7 +51,10 @@ def main():
         help="specify that menu file is in full range. Default is TV range.",
     )
     args = parser.parse_args()
-    m = functools.partial(_error_msg, verbose=args.verbose)
+    if args.debug:
+        debugging.setup()
+
+    m = functools.partial(_error_msg, verbose=args.verbose, debug=args.debug)
 
     for name in args.files:
         if not os.path.isfile(name):
