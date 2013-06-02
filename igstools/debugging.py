@@ -1,7 +1,6 @@
 import pdb, sys, traceback
 import signal
 
-activated = False
 
 def setup():
     def info(type, value, tb):
@@ -9,7 +8,7 @@ def setup():
         pdb.pm()
 
     sys.excepthook = info
-    activated = True
+
 
 def dumpstacks(signal, frame):
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
@@ -22,6 +21,6 @@ def dumpstacks(signal, frame):
                 code.append("  %s" % (line.strip()))
     print("\n".join(code))
 
+
 def dump_on_ctrl_break():
     signal.signal(signal.SIGBREAK, dumpstacks)
-
