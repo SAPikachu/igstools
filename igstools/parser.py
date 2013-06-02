@@ -124,17 +124,61 @@ def parse_button_segment(stream):
         "pages": [],
     }
     for i in range(page_count):
-        # [u8 page_id] [u8 unknown] [u64 uo] [u32 in/out_effects count]
-        # [u8 framerate_divider] [u16 def_button] [u16 def_activated]
-        # [u8 palette] [u8 bog_count]
-        page_id, _, uo, effect_count, framerate_divider, def_button, \
-            def_activated, palette, bog_count = \
-            unpack_from_stream(">BBQIBHHBB", stream)
+        # [u8 page_id] [u8 ?] [u64 uo]
+        page_id, _, uo = unpack_from_stream(">BBQ", stream)
 
+        def _read_effects(count):
+            ret = []
+            for j in range(count):
+                # FIXME: Can't find reference for this structure
+                # [u8 id] [u16 x] [u16 y] [u16 width] [u16 height]
+                # [u8 num effects]
+                window_id, x, y, width, height, num_effects = \
+                    unpack_from_stream(">BHHHHB", stream)
+
+                effect_window = {
+                    "id": window_id,
+                    "x": x,
+                    "y": y,
+                    "width": width,
+                    "height": height,
+                    "effects": [],
+                }
+                for k in range(num_effects):
+                    # [u24 ?! duration] [u8 palette] [u8 ?? count of object]
+                    # FIXME: Seems count_of_object does not exist?
+                    dur1, dur2, dur3, palette = \
+                        unpack_from_stream(">4B", stream)
+
+                    effect_window["effects"].append({
+                        "duration": (dur1 << 16) | (dur2 << 8) | dur3,
+                        "palette": palette,
+                    })
+
+                ret.append(effect_window)
+
+            return ret
+
+        in_effect_count, = unpack_from_stream(">B", stream)
+        if in_effect_count == 0xff:
+            in_effect_count = 0
+
+        in_effects = _read_effects(in_effect_count)
+        out_effect_count, = unpack_from_stream(">B", stream)
+        if out_effect_count == 0xff:
+            out_effect_count = 0
+
+        out_effects = _read_effects(out_effect_count)
+
+        # [u16 ?] [u8 framerate_divider] [u16 def_button] [u16 def_activated]
+        # [u8 palette] [u8 bog_count]
+        _, framerate_divider, def_button, def_activated, palette, bog_count = \
+            unpack_from_stream(">HBHHBB", stream)
         cur_page = {
             "id": page_id,
             "uo": uo,
-            "effect_count": effect_count,
+            "in_effects": in_effects,
+            "out_effects": out_effects,
             "framerate_divider": framerate_divider,
             "def_button": def_button,
             "def_activated": def_activated,
