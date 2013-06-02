@@ -1,3 +1,5 @@
+import logging
+
 from .parser import (
     igs_decoded_segments,
     BUTTON_SEGMENT, PICTURE_SEGMENT, PALETTE_SEGMENT,
@@ -6,19 +8,25 @@ from .parser import (
 
 class Palette(dict):
     def __init__(self, seg):
+        log = logging.getLogger("model.Palette")
+        log.info("Creating palette...")
         for color in seg["palette"]:
             assert color["color_id"] not in self
             self[color["color_id"]] = color
 
-        if 255 not in self:
-            # Seems #255 is always fully-transparent black
-            self[255] = {
-                "color_id": 255,
-                "y": 16,
-                "cb": 128,
-                "cr": 128,
-                "alpha": 0,
-            }
+        for i in range(256):
+            if i not in self:
+                if i < 255:
+                    # Seems #255 never exists
+                    log.warning("Color entry #{} does not exist".format(i))
+
+                self[i] = {
+                    "color_id": i,
+                    "y": 16,
+                    "cb": 128,
+                    "cr": 128,
+                    "alpha": 0,
+                }
 
     def __str__(self):
         return "<Palette ({} colors)>".format(len(self))
