@@ -123,6 +123,10 @@ class IGSMenu:
         self.pages = {x["id"]: Page(x) for x in self.pages}
         for page in self.pages.values():
             page.palette = self.palettes[page.palette]
+            for subeffect in (page.in_effects["effects"] +
+                              page.out_effects["effects"]):
+                subeffect["palette"] = self.palettes[subeffect["palette"]]
+
             for bog in page.bogs:
                 for button in bog.buttons.values():
                     for states in button.states.values():
