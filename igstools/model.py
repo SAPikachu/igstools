@@ -18,7 +18,7 @@ class Palette(dict):
             if i not in self:
                 if i < 255:
                     # Seems #255 never exists
-                    log.warning("Color entry #{} does not exist".format(i))
+                    log.debug("Color entry #{} does not exist".format(i))
 
                 self[i] = {
                     "color_id": i,
