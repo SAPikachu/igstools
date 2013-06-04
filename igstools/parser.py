@@ -201,6 +201,8 @@ def parse_button_segment(stream):
                     _log_dict(obj, "Object, ")
                     cur_effect["objects"].append(obj)
 
+                ret["effects"].append(cur_effect)
+
             return ret
 
         in_effects = _read_effects()
