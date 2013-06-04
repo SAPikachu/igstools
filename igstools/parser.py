@@ -156,55 +156,60 @@ def parse_button_segment(stream):
         # [u8 page_id] [u8 ?] [u64 uo]
         page_id, _, uo = _unpack_from_stream(">BBQ", stream)
 
-        def _read_effects(count):
-            ret = []
-            for j in range(count):
-                # FIXME: Can't find reference for this structure
+        def _read_effects():
+            ret = {
+                "windows": {},
+                "effects": [],
+            }
+            for _0 in range(ord(stream.read(1))):
                 # [u8 id] [u16 x] [u16 y] [u16 width] [u16 height]
-                # [u8 num effects]
-                window_id, x, y, width, height, num_effects = \
-                    _unpack_from_stream(">BHHHHB", stream)
+                window_id, x, y, width, height = \
+                    _unpack_from_stream(">BHHHH", stream)
 
+                assert window_id not in ret["windows"]
                 effect_window = {
                     "id": window_id,
                     "x": x,
                     "y": y,
                     "width": width,
                     "height": height,
-                    "effects": [],
                 }
                 _log_dict(effect_window, "Effect window, ")
-                for k in range(num_effects):
-                    # [u24 ?! duration] [u8 palette] [u8 ?? count of object]
-                    # FIXME: Seems count_of_object does not exist?
-                    dur1, dur2, dur3, palette = \
-                        _unpack_from_stream(">4B", stream)
+                ret["windows"][window_id] = effect_window
 
-                    effect_window["effects"].append({
-                        "duration": (dur1 << 16) | (dur2 << 8) | dur3,
-                        "palette": palette,
-                    })
-                    _log_dict(effect_window["effects"][-1], "Effect, ")
+            for _0 in range(ord(stream.read(1))):
+                # [u24 ?! duration] [u8 palette] [u8 count of object]
+                dur1, dur2, dur3, palette, num_objects = \
+                    _unpack_from_stream(">5B", stream)
 
-                ret.append(effect_window)
+                cur_effect = {
+                    "duration": (dur1 << 16) | (dur2 << 8) | dur3,
+                    "palette": palette,
+                    "objects": [],
+                }
+                _log_dict(cur_effect, "Effect, ")
+                for _1 in range(num_objects):
+                    obj_id, window, x, y = \
+                        _unpack_from_stream(">4H", stream)
+
+                    obj = {
+                        "id": obj_id,
+                        "window": ret["windows"][window],
+                        "x": x,
+                        "y": y,
+                    }
+                    _log_dict(obj, "Object, ")
+                    cur_effect["objects"].append(obj)
 
             return ret
 
-        in_effect_count, = _unpack_from_stream(">B", stream)
-        if in_effect_count == 0xff:
-            in_effect_count = 0
+        in_effects = _read_effects()
+        out_effects = _read_effects()
 
-        in_effects = _read_effects(in_effect_count)
-        out_effect_count, = _unpack_from_stream(">B", stream)
-        if out_effect_count == 0xff:
-            out_effect_count = 0
-
-        out_effects = _read_effects(out_effect_count)
-
-        # [u16 ?] [u8 framerate_divider] [u16 def_button] [u16 def_activated]
+        # [u8 framerate_divider] [u16 def_button] [u16 def_activated]
         # [u8 palette] [u8 bog_count]
-        _, framerate_divider, def_button, def_activated, palette, bog_count = \
-            _unpack_from_stream(">HBHHBB", stream)
+        framerate_divider, def_button, def_activated, palette, bog_count = \
+            _unpack_from_stream(">BHHBB", stream)
         cur_page = {
             "id": page_id,
             "uo": uo,
