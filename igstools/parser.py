@@ -43,7 +43,7 @@ def _dump_dict(d):
 
         return str(v)
 
-    return ", ".join(["=".join([k, _dump_value(v)]) for k, v in d.items()])
+    return ", ".join(["=".join([str(k), _dump_value(v)]) for k, v in d.items()])
 
 
 def _log_dict(d, prefix=""):
