@@ -265,7 +265,7 @@ def parse_button_segment(stream):
                     "commands": [_unpack_from_stream(">III", stream)
                                  for x in range(cmds_count)],
                 })
-                _log_dict(cur_bog["buttons"][-1], "Button")
+                _log_dict(cur_bog["buttons"][-1], "Button, ")
 
             cur_page["bogs"].append(cur_bog)
 
