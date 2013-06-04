@@ -4,6 +4,7 @@ import sys
 import traceback
 from contextlib import contextmanager
 import functools
+import logging
 
 from . import IGSMenu
 from .export import menu_to_png, YCBCR_COEFF
@@ -53,6 +54,7 @@ def main():
     args = parser.parse_args()
     if args.debug:
         debugging.setup()
+        logging.basicConfig(level=logging.DEBUG)
 
     m = functools.partial(_error_msg, verbose=args.verbose, debug=args.debug)
 
