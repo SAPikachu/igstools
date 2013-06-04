@@ -101,25 +101,32 @@ def parse_palette_segment(stream):
 
 
 def parse_picture_segment(stream):
-    # [u16 oid] [u8 ver] [u8 seq_desc] [u24 rle_bitmap_len *]
-    # [u16 width] [u16 height]
-    picture_id, ver, seq_desc, len1, len2, len3, width, height = \
-        _unpack_from_stream(">HBBBBBHH", stream)
+    # [u16 oid] [u8 ver] [u8 seq_desc] [u24 rle_bitmap_len * !]
+    # [u16 width !] [u16 height !]
+    # Note: The last 3 elements are not present in continued segments
+    picture_id, ver, seq_desc = _unpack_from_stream(">HBB", stream)
 
-    rle_bitmap_len = (len1 << 16) | (len2 << 8) | len3
-
-    # Stored length includes width and height
-    rle_bitmap_len -= 4
     ret = {
         "id": picture_id,
         "ver": ver,
         "seq_desc": seq_desc,
         "is_continuation": not bool(seq_desc & 0x80),
-        "width": width,
-        "height": height,
-        "rle_bitmap_len": rle_bitmap_len,
-        "rle_bitmap_data": stream.read(),
     }
+    if not ret["is_continuation"]:
+        len1, len2, len3, width, height = _unpack_from_stream(">BBBHH", stream)
+
+        rle_bitmap_len = (len1 << 16) | (len2 << 8) | len3
+
+        # Stored length includes width and height
+        rle_bitmap_len -= 4
+        ret.update({
+            "width": width,
+            "height": height,
+            "rle_bitmap_len": rle_bitmap_len,
+        })
+
+    ret.update({"rle_bitmap_data": stream.read()})
+
     _log_dict(ret, "Picture segment, ")
     return ret
 
