@@ -1,7 +1,8 @@
 import logging
+import os
 
 from .parser import (
-    igs_decoded_segments,
+    igs_decoded_segments, m2ts_igs_stream,
     BUTTON_SEGMENT, PICTURE_SEGMENT, PALETTE_SEGMENT,
 )
 
@@ -92,7 +93,11 @@ class IGSMenu:
     def __init__(self, stream_or_filename):
         if isinstance(stream_or_filename, str):
             with open(stream_or_filename, "rb") as f:
-                self.__init__(f)
+                stream = f
+                if os.path.splitext(stream_or_filename)[1].lower() == ".m2ts":
+                    stream = m2ts_igs_stream(stream)
+
+                self.__init__(stream)
 
             return
 

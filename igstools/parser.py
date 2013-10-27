@@ -11,6 +11,7 @@ from .utils import (
     eof_aware_read as _eof_aware_read,
     log_dict,
 )
+from .ts_reader import igs_demuxer_iter
 
 PALETTE_SEGMENT = 0x14
 PICTURE_SEGMENT = 0x15
@@ -19,6 +20,32 @@ DISPLAY_SEGMENT = 0x80
 
 log = logging.getLogger("parser")
 _log_dict = functools.partial(log_dict, log)
+
+
+def m2ts_igs_stream(stream):
+    class FakeStream:
+        def __init__(self):
+            self.iterator = igs_demuxer_iter(stream)
+            self.last_buffer = b""
+
+        def read(self, count):
+            assert count >= 0
+            buffer = [self.last_buffer]
+            bytes_buffered = len(self.last_buffer)
+            while bytes_buffered < count:
+                chunk = next(self.iterator, None)
+                if not chunk:
+                    self.last_buffer = b""
+                    return b"".join(buffer)
+
+                buffer.append(chunk)
+                bytes_buffered += len(chunk)
+
+            all_data = b"".join(buffer)
+            self.last_buffer = all_data[count:]
+            return all_data[:count]
+
+    return FakeStream()
 
 
 def igs_raw_segments(stream):
