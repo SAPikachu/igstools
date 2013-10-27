@@ -32,7 +32,7 @@ else:
 
 setup(
     name="igstools",
-    version="0.9.2",
+    version="0.9.3",
     description="Tools for parsing bluray IGS menus",
     long_description=long_description,
     author="Joe Hu (SAPikachu)",

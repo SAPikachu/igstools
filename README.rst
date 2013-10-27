@@ -31,6 +31,9 @@ To use it, first use `BDedit <http://www.videohelp.com/tools/BDedit>`_ to extrac
 
     igstopng your.mnu
 
+Note: As of 0.9.3, ``igstopng`` supports directly exporting from M2TS file.
+The speed is slower, but sometimes ``BDedit`` exports corrupted menu file and you may get correct result from direct export.
+
 All menu pages will be exported alongside the menu file. For every page, 6 states (normal/selected/activated multiplied with start/stop) of buttons will be exported to 6 different page images. (This may be changed in the future since it is rather messed up and unnecessary)
 
 Note: If the command above doesn't work on Windows, try this::
