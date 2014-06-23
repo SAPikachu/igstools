@@ -45,7 +45,11 @@ def _build_rgb_palette(ycbcr_palette, coeff, tv_range):
     }
 
 
-def picture_data_to_rgb(pic, palette, buffer, stride=None, buffer_offset=0):
+def matrix_from_menu_height(height):
+    return "709" if height >= 600 else "601"
+
+
+def picture_data_to_rgb(pic, rgb_palette, buffer, stride=None, buffer_offset=0):
     stride = stride or pic.width * 4
     assert stride >= pic.width * 4
 
@@ -53,9 +57,28 @@ def picture_data_to_rgb(pic, palette, buffer, stride=None, buffer_offset=0):
         line_start = buffer_offset + stride * y
         for x in range(pic.width):
             index = pic.picture_data[y * pic.width + x]
-            color = palette[index]
+            color = rgb_palette[index]
             offset = line_start + x * 4
             buffer[offset:offset+4] = color
+
+
+def picture_to_png(pic, palette, stream, matrix, tv_range=True):
+    if isinstance(stream, str):
+        with open(stream, "wb") as f:
+            return picture_to_png(pic, palette, f)
+
+    width = pic.width
+    height = pic.height
+
+    rgb_palette = _build_rgb_palette(
+        palette, YCBCR_COEFF[matrix], tv_range,
+    )
+    image_buffer = bytearray(width * height * 8)
+    with memoryview(image_buffer) as main_view:
+        with main_view.cast("H") as view:
+            picture_data_to_rgb(pic, rgb_palette, view)
+            writer = png.Writer(width, height, alpha=True, bitdepth=16)
+            writer.write_array(stream, view)
 
 
 def page_to_png(
@@ -72,7 +95,7 @@ def page_to_png(
     height = menu.height
 
     if not matrix:
-        matrix = "709" if height >= 600 else "601"
+        matrix = matrix_from_menu_height(height)
 
     rgb_palette = _build_rgb_palette(
         page.palette, YCBCR_COEFF[matrix], tv_range,

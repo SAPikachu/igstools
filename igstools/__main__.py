@@ -8,6 +8,7 @@ import logging
 
 from . import IGSMenu
 from .export import menu_to_png, YCBCR_COEFF
+from .exportjson import menu_to_json
 from . import debugging
 
 ENTRYPOINT = "igstopng"
@@ -31,7 +32,7 @@ def _error_msg(msg, verbose, debug):
 def main():
     parser = argparse.ArgumentParser(
         prog=ENTRYPOINT,
-        description="Export bluray IGS menu to PNG images",
+        description="Export bluray IGS menu to PNG images or JSON data",
     )
     parser.add_argument("files", metavar="file", nargs="+")
     parser.add_argument(
@@ -51,6 +52,10 @@ def main():
         "--full-range", dest="tv_range", action="store_false",
         help="specify that menu file is in full range. Default is TV range.",
     )
+    parser.add_argument(
+        "-j", "--json", action="store_true",
+        help="output JSON data instead of PNG images.",
+    )
     args = parser.parse_args()
     if args.debug:
         debugging.setup()
@@ -68,11 +73,18 @@ def main():
 
         prefix, _ = os.path.splitext(name)
         with m("Unable to generate image for {}".format(name)):
-            menu_to_png(
-                menu, prefix + "_{0.id}_{state1}_{state2}.png",
-                matrix=args.matrix,
-                tv_range=args.tv_range,
-            )
+            if args.json:
+                menu_to_json(
+                    menu, prefix + ".json",
+                    matrix=args.matrix,
+                    tv_range=args.tv_range,
+                )
+            else:
+                menu_to_png(
+                    menu, prefix + "_{0.id}_{state1}_{state2}.png",
+                    matrix=args.matrix,
+                    tv_range=args.tv_range,
+                )
 
 
 if __name__ == "__main__":

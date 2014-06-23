@@ -1,5 +1,6 @@
 import logging
 import os
+from copy import deepcopy
 
 from .parser import (
     igs_decoded_segments, m2ts_igs_stream,
@@ -46,6 +47,7 @@ class Picture:
 class Button:
     def __init__(self, raw_data):
         self.__dict__.update(raw_data)
+        self.raw_data = deepcopy(raw_data)
 
     def __str__(self):
         return "<Button #{0.id} ({0.x}, {0.y})>".format(self)
@@ -54,6 +56,7 @@ class Button:
 class BOG:
     def __init__(self, raw_data):
         self.__dict__.update(raw_data)
+        self.raw_data = deepcopy(raw_data)
         self.buttons = {x["id"]: Button(x) for x in self.buttons}
         self.def_button = self.buttons[self.def_button]
 
@@ -64,6 +67,7 @@ class BOG:
 class Page:
     def __init__(self, raw_data):
         self.__dict__.update(raw_data)
+        self.raw_data = deepcopy(raw_data)
         self.bogs = [BOG(x) for x in self.bogs]
         self.def_button = self._find_button(self.def_button)
         self.def_activated = self._find_button(self.def_activated)
@@ -127,7 +131,8 @@ class IGSMenu:
         del self.seg_type
         self.pages = {x["id"]: Page(x) for x in self.pages}
         for page in self.pages.values():
-            page.palette = self.palettes[page.palette]
+            page.palette_id = page.palette
+            page.palette = self.palettes[page.palette_id]
             for subeffect in (page.in_effects["effects"] +
                               page.out_effects["effects"]):
                 subeffect["palette"] = self.palettes[subeffect["palette"]]
