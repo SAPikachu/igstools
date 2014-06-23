@@ -45,6 +45,19 @@ def _build_rgb_palette(ycbcr_palette, coeff, tv_range):
     }
 
 
+def picture_data_to_rgb(pic, palette, buffer, stride=None, buffer_offset=0):
+    stride = stride or pic.width * 4
+    assert stride >= pic.width * 4
+
+    for y in range(pic.height):
+        line_start = buffer_offset + stride * y
+        for x in range(pic.width):
+            index = pic.picture_data[y * pic.width + x]
+            color = palette[index]
+            offset = line_start + x * 4
+            buffer[offset:offset+4] = color
+
+
 def page_to_png(
     menu, page_index, stream,
     matrix=None, tv_range=True, state_selector=lambda _:("normal", "start"),
@@ -55,6 +68,7 @@ def page_to_png(
 
     page = menu.pages[page_index]
     width = menu.width
+    stride = width * 4
     height = menu.height
 
     if not matrix:
@@ -77,13 +91,11 @@ def page_to_png(
                     assert button.x + pic.width <= width
                     assert button.y + pic.height <= height
 
-                    for y in range(pic.height):
-                        line_start = (button.y + y) * width + button.x
-                        for x in range(pic.width):
-                            index = pic.picture_data[y * pic.width + x]
-                            color = rgb_palette[index]
-                            offset = (line_start + x) * 4
-                            view[offset:offset+4] = color
+                    picture_data_to_rgb(
+                        pic, rgb_palette, view,
+                        stride=stride,
+                        buffer_offset=stride * button.y + button.x * 4,
+                    )
 
             writer = png.Writer(width, height, alpha=True, bitdepth=16)
             writer.write_array(stream, view)
