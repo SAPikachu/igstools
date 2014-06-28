@@ -247,6 +247,7 @@ def parse_button_segment(stream):
                     "id": button_id,
                     "v": v,
                     "f": f,
+                    "auto_action": bool(f & 128),
                     "x": x,
                     "y": y,
                     "navigation": {
