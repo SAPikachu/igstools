@@ -19,7 +19,7 @@ def menu_to_json(
         matrix = matrix_from_menu_height(menu.height)
 
     json_obj = {
-        "varsion": 1,
+        "version": 1,
         "pictures": {},
         "pages": {p.id: p.raw_data for p in menu.pages.values()},
         "width": menu.width,
