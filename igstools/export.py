@@ -77,7 +77,7 @@ def picture_to_png(pic, palette, stream, matrix, tv_range=True):
     with memoryview(image_buffer) as main_view:
         with main_view.cast("H") as view:
             picture_data_to_rgb(pic, rgb_palette, view)
-            writer = png.Writer(width, height, alpha=True, bitdepth=16)
+            writer = png.Writer(width, height, alpha=True, bitdepth=16, greyscale=False)
             writer.write_array(stream, view)
 
 
@@ -120,7 +120,7 @@ def page_to_png(
                         buffer_offset=stride * button.y + button.x * 4,
                     )
 
-            writer = png.Writer(width, height, alpha=True, bitdepth=16)
+            writer = png.Writer(width, height, alpha=True, bitdepth=16, greyscale=False)
             writer.write_array(stream, view)
 
 
